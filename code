@@ -1,0 +1,96 @@
+#include <WiFi.h>
+
+const int motor1Pin1 = 25;
+const int motor1Pin2 = 26;
+const int motor2Pin1 = 27;
+const int motor2Pin2 = 14;
+
+const char* ssid = "JMJ WIFI";
+const char* password = "********";
+
+WiFiServer server(80);
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(motor1Pin1, OUTPUT);
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(motor2Pin1, OUTPUT);
+  pinMode(motor2Pin2, OUTPUT);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  server.begin();
+  Serial.println("Server started");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (client) {
+    String request = client.readStringUntil('\r');
+    Serial.println(request);
+    client.flush();
+
+    if (request.indexOf("/forward") != -1) {
+      moveForward();
+    } else if (request.indexOf("/backward") != -1) {
+      moveBackward();
+    } else if (request.indexOf("/left") != -1) {
+      turnLeft();
+    } else if (request.indexOf("/right") != -1) {
+      turnRight();
+    } else if (request.indexOf("/stop") != -1) {
+      stopCar();
+    }
+    
+    client.print("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+    client.print("Command Received\r\n");
+    client.stop();
+  }
+}
+
+void moveForward() {
+  Serial.println("Moving Forward");
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+}
+
+void moveBackward() {
+  Serial.println("Moving Backward");
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+}
+
+void turnLeft() {
+  Serial.println("Moving Left");
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+}
+
+void turnRight() {
+  Serial.println("Moving Right");
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+}
+
+void stopCar() {
+  Serial.println("Stopped!!");
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, LOW);
+}
